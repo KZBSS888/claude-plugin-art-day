@@ -1,0 +1,14 @@
+{
+  "name": "claude-plugin-art-day",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "description": "A daily museum painting from Wikimedia Commons for Claude, with ratings and taste-guided selection.",
+  "license": "MIT",
+  "engines": {"node": ">=20"},
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "live": "node test/live.mjs",
+    "serve": "node server/http.mjs"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "art-day-local",
+  "owner": {
+    "name": "KZBSS888"
+  },
+  "metadata": {
+    "description": "A local marketplace with the single Art Day plugin"
+  },
+  "plugins": [
+    {
+      "name": "art-day",
+      "source": "./",
+      "description": "One museum painting from Wikimedia Commons every day, in the language of your system: story, ratings, favourites and picks by taste.",
+      "version": "1.2.0"
+    }
+  ]
+}

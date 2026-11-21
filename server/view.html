@@ -1,0 +1,236 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art Day</title>
+<style>
+  :root { --paper: #f6f1e7; --ink: #2a2622; --soft: #756c5f; --line: #ddd3c2; --accent: #a4532a; --panel: #fffaf0; color-scheme: light; }
+  :root[data-theme="dark"] { --paper: #1d1b19; --ink: #efe8db; --soft: #a59b8b; --line: #3a352f; --accent: #e09a6c; --panel: #262320; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.55 -apple-system, "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 18px 18px 22px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .logo { font: 600 22px/1 Georgia, "Times New Roman", serif; letter-spacing: .01em; }
+  .logo span { color: var(--accent); }
+  nav { display: flex; gap: 4px; }
+  button { font: inherit; color: inherit; background: none; border: 1px solid transparent; border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+  button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button:disabled { opacity: .5; cursor: default; }
+  nav button.on { border-color: var(--line); background: var(--panel); }
+  .eyebrow { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--soft); }
+  h1 { font: 500 30px/1.15 Georgia, "Times New Roman", serif; margin: 4px 0 6px; }
+  .byline, .small { color: var(--soft); font-size: 13px; }
+  .art { position: relative; margin: 6px 0 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .art img { display: block; width: 100%; max-height: 72vh; object-fit: contain; }
+  .art button { position: absolute; right: 10px; bottom: 10px; background: rgba(20, 18, 16, .72); color: #fff; }
+  .caption { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .heart { font-size: 24px; line-height: 1; padding: 6px 10px; color: var(--accent); }
+  .story { font: 16px/1.65 Georgia, "Times New Roman", serif; margin: 14px 0; }
+  .detail { border-left: 3px solid var(--accent); background: var(--panel); padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 14px 0; }
+  .detail b { display: block; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--soft); margin-bottom: 2px; }
+  .actions, .tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .actions button, .tags button, .notice button { border-color: var(--line); background: var(--panel); }
+  .tags button.on { border-color: var(--accent); color: var(--accent); }
+  section.rating { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 14px; }
+  h3 { font: 500 18px/1.2 Georgia, serif; margin: 0 0 2px; }
+  .stars button { font-size: 26px; padding: 0 3px; color: var(--accent); border-radius: 6px; }
+  footer { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--line); margin-top: 18px; padding-top: 10px; color: var(--soft); font-size: 12px; }
+  .notice { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; display: flex; gap: 10px; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .grid button { border: 1px solid var(--line); border-radius: 6px; padding: 0 0 8px; overflow: hidden; text-align: left; background: var(--panel); }
+  .grid img { display: block; width: 100%; height: 130px; object-fit: cover; margin-bottom: 6px; }
+  .grid strong, .grid span { display: block; padding: 0 8px; font-size: 13px; }
+  .grid span { color: var(--soft); }
+  .zoom { position: fixed; inset: 0; background: rgba(12, 11, 10, .94); display: flex; align-items: center; justify-content: center; z-index: 5; }
+  .zoom img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  .zoom button { position: absolute; top: 12px; right: 12px; color: #fff; border-color: rgba(255, 255, 255, .4); }
+</style>
+</head>
+<body>
+<main id="app" aria-live="polite"><p class="small">…</p></main>
+<script type="application/json" id="strings">/*STRINGS*/</script>
+<script>
+// Card for Art Day. It talks to Claude over postMessage (MCP Apps) and builds the page
+// from plain text nodes only, so nothing from a source page can ever run as code.
+const app = document.getElementById('app');
+// The fixed texts, in the language of the collection: the server puts the dictionary in with the page.
+const {lang, strings: t} = JSON.parse(document.getElementById('strings').textContent);
+document.documentElement.lang = lang;
+app.firstChild.textContent = t.loading;
+const fill = (text, values) => String(text).replace(/\{([a-z]+)\}/g, (hole, name) => (values && name in values ? String(values[name]) : hole));
+const pending = new Map();
+let nextId = 1, state = null, tab = 'today', notice = '', busy = false, zoomed = false;
+
+function send(message) { window.parent.postMessage({jsonrpc: '2.0', ...message}, '*'); }
+function notify(method, params = {}) { send({method, params}); }
+function request(method, params = {}, timeoutMs = 10000) {
+  return new Promise((resolve, reject) => {
+    const id = nextId++;
+    const timer = setTimeout(() => { pending.delete(id); reject(new Error('timeout')); }, timeoutMs);
+    pending.set(id, {resolve, reject, timer});
+    send({id, method, params});
+  });
+}
+
+window.addEventListener('message', event => {
+  const message = event.data;
+  if (!message || message.jsonrpc !== '2.0') return;
+  if (message.id !== undefined && !message.method) { // a response to one of our requests
+    const waiting = pending.get(message.id);
+    if (!waiting) return;
+    pending.delete(message.id);
+    clearTimeout(waiting.timer);
+    return message.error ? waiting.reject(new Error(message.error.message)) : waiting.resolve(message.result);
+  }
+  if (message.method === 'ui/notifications/tool-result') accept(message.params);
+  if (message.method === 'ui/notifications/host-context-changed') applyContext(message.params);
+  if (message.method === 'ui/resource-teardown' || message.method === 'ping') send({id: message.id, result: {}});
+});
+
+function applyContext(context) {
+  if (context && context.theme) document.documentElement.dataset.theme = context.theme;
+}
+
+/** Takes a tool result; only a full card state replaces what is shown. */
+function accept(result) {
+  const data = result && result.structuredContent;
+  if (!data || !('today' in data) || result.isError) return false;
+  state = data;
+  render();
+  return true;
+}
+
+async function start() {
+  try {
+    const host = await request('ui/initialize', {
+      protocolVersion: '2026-01-26', appInfo: {name: 'art-day', version: '1.0.0'},
+      appCapabilities: {availableDisplayModes: ['inline', 'fullscreen']},
+    });
+    applyContext(host && host.hostContext);
+  } catch { /* an older host: keep going, the tool result may still arrive */ }
+  notify('ui/notifications/initialized');
+  new ResizeObserver(() => notify('ui/notifications/size-changed', {
+    width: Math.ceil(document.documentElement.scrollWidth), height: Math.ceil(document.documentElement.scrollHeight),
+  })).observe(document.body);
+  // Opened from the sidebar there may be no tool result yet: ask for the card ourselves.
+  setTimeout(() => { if (!state) refresh(); }, 1500);
+}
+
+async function refresh(id) {
+  try { accept(await request('tools/call', {name: 'art_day_open', arguments: id ? {id} : {}})); } catch { /* shown as loading */ }
+}
+
+/** Sends a line to the chat on the user's behalf; used when the card cannot call tools itself. */
+function say(text) {
+  return request('ui/message', {role: 'user', content: [{type: 'text', text}]}, 60000).catch(() => {});
+}
+
+async function save(change, spoken) {
+  const id = state.card.id;
+  busy = true; notice = ''; render();
+  try {
+    const result = await request('tools/call', {name: 'art_day_rate', arguments: {id, ...change}}, 8000);
+    if (!accept(result)) throw new Error('rejected');
+    notice = t.saved;
+  } catch {
+    // A local installation: Claude saves the change after reading this message in the chat.
+    state.pref = {...state.pref, ...change};
+    notice = t.sentToChat;
+    say(fill(t.saySave, {id, what: spoken}));
+  }
+  busy = false; render();
+}
+
+function el(tag, props = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(props)) {
+    if (key === 'onclick') node.addEventListener('click', value);
+    else if (key === 'class') node.className = value;
+    else if (value !== false && value !== null && value !== undefined) node.setAttribute(key, value === true ? '' : value);
+  }
+  for (const child of children.flat()) if (child !== null && child !== undefined && child !== false) node.append(child);
+  return node;
+}
+
+/** Reproductions may come only from Wikimedia's image hosts. */
+const safeImage = url => (typeof url === 'string' && /^https:\/\/(upload|thumb)\.wikimedia\.org\//.test(url) ? url : '');
+const openLink = url => request('ui/open-link', {url}).catch(() => {});
+
+function renderToday() {
+  const {card, pref} = state;
+  if (!card) return [el('h1', {}, 'Art Day'), el('p', {class: 'story'}, t.noCard)];
+  const image = safeImage(card.viewUrl);
+  return [
+    el('div', {class: 'art'},
+      el('img', {src: image, alt: `${card.title} — ${card.artist}`}),
+      el('button', {onclick: () => { zoomed = true; request('ui/request-display-mode', {mode: 'fullscreen'}).catch(() => {}); render(); }}, t.zoom)),
+    el('div', {class: 'caption'},
+      el('div', {},
+        el('div', {class: 'eyebrow'}, [card.artist, card.year].filter(Boolean).join(' · ')),
+        el('h1', {}, card.title),
+        el('div', {class: 'byline'}, [card.museum, card.medium].filter(Boolean).join(' · '))),
+      el('button', {class: 'heart', disabled: busy, 'aria-pressed': String(pref.favorite), 'aria-label': pref.favorite ? t.favRemove : t.favAdd,
+        onclick: () => save({favorite: !pref.favorite}, pref.favorite ? t.sayFavOff : t.sayFavOn)}, pref.favorite ? '♥' : '♡')),
+    el('p', {class: 'story'}, card.story),
+    el('div', {class: 'detail'}, el('b', {}, t.detail), card.detail),
+    el('div', {class: 'actions'},
+      el('button', {onclick: () => openLink(card.imageUrl)}, t.openOriginal),
+      el('button', {onclick: () => openLink(card.sourceUrl)}, t.sourcePage)),
+    el('section', {class: 'rating'},
+      el('h3', {}, t.rateQuestion),
+      el('div', {class: 'stars'}, [1, 2, 3, 4, 5].map(n => el('button', {disabled: busy, 'aria-label': fill(t.rateN, {n}), 'aria-pressed': String(pref.rating === n),
+        onclick: () => save({rating: n}, fill(t.sayRating, {n}))}, n <= (pref.rating || 0) ? '★' : '☆'))),
+      el('p', {class: 'small'}, (pref.rating ? fill(t.yourRating, {n: pref.rating}) : t.rateHint) + (notice ? ' · ' + notice : '')),
+      el('p', {class: 'small'}, t.traitsQuestion),
+      el('div', {class: 'tags'}, state.traits.map(trait => {
+        const on = pref.traits.includes(trait);
+        const next = on ? pref.traits.filter(item => item !== trait) : [...pref.traits, trait];
+        return el('button', {class: on ? 'on' : '', disabled: busy, 'aria-pressed': String(on),
+          onclick: () => save({traits: next}, fill(t.sayTraits, {list: next.map(key => t['trait_' + key] || key).join(', ') || t.none}))}, t['trait_' + trait] || trait);
+      }))),
+    el('footer', {},
+      el('span', {}, `${card.date} · Wikimedia Commons`),
+      el('span', {}, card.rights)),
+  ];
+}
+
+function renderFavorites() {
+  if (!state.favorites.length) return [el('h1', {}, t.favTitle), el('p', {class: 'story'}, t.favEmpty)];
+  return [el('h1', {}, t.favTitle), el('div', {class: 'grid'}, state.favorites.map(item =>
+    el('button', {onclick: () => { tab = 'today'; refresh(item.id); }},
+      el('img', {src: safeImage(item.thumbUrl), alt: item.title}), el('strong', {}, item.title), el('span', {}, item.artist))))];
+}
+
+function renderTaste() {
+  const liked = state.taste.tags.filter(tag => tag.weight > 0).map(tag => tag.name).join(' · ');
+  return [
+    el('div', {class: 'eyebrow'}, t.tasteEyebrow), el('h1', {}, t.tasteTitle),
+    el('p', {class: 'story'}, state.rated.length ? fill(t.tasteRated, {n: state.rated.length})
+      : t.tasteEmpty),
+    el('div', {class: 'detail'}, el('b', {}, t.tasteCloser), liked || t.tasteFew),
+    state.rated.map(item => el('p', {}, `${item.title} — ${item.rating}/5${item.traits.length ? ' · ' + item.traits.map(key => t['trait_' + key] || key).join(', ') : ''}`)),
+    el('p', {class: 'small'}, t.tasteNote),
+  ];
+}
+
+function render() {
+  if (!state) return;
+  const tabs = [['today', t.tabToday], ['saved', t.tabSaved], ['taste', t.tabTaste]];
+  const body = tab === 'saved' ? renderFavorites() : tab === 'taste' ? renderTaste() : renderToday();
+  const stale = state.stale && el('div', {class: 'notice', role: 'status'},
+    el('span', {}, !state.enabled ? t.pickOff
+      : state.attemptsLeft ? fill(t.pickMissing, {date: state.today}) : t.pickSpent),
+    state.enabled && state.attemptsLeft > 0 && el('button', {onclick: () => say(t.sayPick)}, t.pickNow));
+  const zoom = zoomed && state.card && el('div', {class: 'zoom', onclick: () => { zoomed = false; request('ui/request-display-mode', {mode: 'inline'}).catch(() => {}); render(); }},
+    el('img', {src: safeImage(state.card.viewUrl), alt: state.card.title}), el('button', {}, t.close));
+  app.replaceChildren(
+    el('header', {}, el('div', {class: 'logo'}, 'Art Day', el('span', {}, '.')),
+      el('nav', {}, tabs.map(([id, name]) => el('button', {class: tab === id ? 'on' : '', onclick: () => { tab = id; notice = ''; render(); }}, name)))),
+    ...[stale, ...body, zoom].flat().filter(Boolean));
+}
+
+start();
+</script>
+</body>
+</html>

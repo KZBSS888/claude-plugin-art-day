@@ -1,0 +1,341 @@
+<title>Art Day</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: the chat card's single column — logo and tabs, reproduction, caption with the heart, story, rating, footer. */
+:root {
+  --paper: #f6f1e7; --ink: #2a2622; --soft: #6f6659; --line: #ddd3c2; --accent: #a4532a; --panel: #fffaf0;
+  --veil: rgba(20, 18, 16, .72); --curtain: rgba(12, 11, 10, .94); --on-dark: #fff; --on-dark-line: rgba(255, 255, 255, .4);
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: -apple-system, "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #1d1b19; --ink: #efe8db; --soft: #a59b8b; --line: #3a352f; --accent: #e09a6c; --panel: #262320; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #1d1b19; --ink: #efe8db; --soft: #a59b8b; --line: #3a352f; --accent: #e09a6c; --panel: #262320; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.55 var(--sans);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 18px 22px; }
+main { max-width: 760px; margin: 0 auto; }
+header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.logo { font: 600 22px/1 var(--serif); letter-spacing: .01em; }
+.logo span { color: var(--accent); }
+nav { display: flex; gap: 4px; flex-wrap: wrap; }
+button, a.button { font: inherit; color: inherit; background: none; border: 1px solid transparent; border-radius: 999px; padding: 5px 12px; cursor: pointer; text-decoration: none; display: inline-block; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:disabled { opacity: .5; cursor: default; }
+nav button.on { border-color: var(--line); background: var(--panel); }
+.eyebrow { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--soft); }
+h1 { font: 500 30px/1.15 var(--serif); margin: 4px 0 6px; text-wrap: balance; }
+.byline, .small { color: var(--soft); font-size: 13px; }
+.small { margin: 6px 0; }
+.small.err { color: var(--accent); }
+.art { position: relative; margin: 6px 0 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.art img { display: block; width: 100%; max-height: 72vh; object-fit: contain; }
+.art .none { padding: 40px 16px; text-align: center; color: var(--soft); font-size: 13px; margin: 0; }
+.art button { position: absolute; right: 10px; bottom: 10px; background: var(--veil); color: var(--on-dark); }
+.caption { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.caption > div { min-width: 0; }
+.heart { font-size: 24px; line-height: 1; padding: 6px 10px; color: var(--accent); }
+.story { font: 16px/1.65 var(--serif); margin: 14px 0; max-width: 68ch; }
+.detail { border-left: 3px solid var(--accent); background: var(--panel); padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 14px 0; }
+.detail b { display: block; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--soft); margin-bottom: 2px; }
+.actions, .tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.actions .button, .tags button, .notice button { border-color: var(--line); background: var(--panel); }
+.tags button.on { border-color: var(--accent); color: var(--accent); }
+section.rating { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 14px; }
+h3 { font: 500 18px/1.2 var(--serif); margin: 0 0 2px; }
+.stars button { font-size: 26px; padding: 0 3px; color: var(--accent); border-radius: 6px; }
+footer { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--line); margin-top: 18px; padding-top: 10px; color: var(--soft); font-size: 12px; }
+.notice { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; display: flex; gap: 10px; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.grid button { border: 1px solid var(--line); border-radius: 6px; padding: 0 0 8px; overflow: hidden; text-align: left; background: var(--panel); }
+.grid img, .grid .blank { display: block; width: 100%; height: 130px; object-fit: cover; margin-bottom: 6px; }
+.grid .blank { background: var(--line); }
+.grid strong, .grid span { display: block; padding: 0 8px; font-size: 13px; }
+.grid span { color: var(--soft); }
+.zoom { position: fixed; inset: 0; background: var(--curtain); display: flex; align-items: center; justify-content: center; z-index: 5;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+.zoom img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.zoom button { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); right: calc(12px + env(safe-area-inset-right, 0px)); color: var(--on-dark); border-color: var(--on-dark-line); background: var(--veil); }
+</style>
+<main id="app" aria-live="polite"><p class="small">…</p></main>
+<script type="application/json" id="snapshot">/*SNAPSHOT*/</script>
+<script>
+// The pinned card for Art Day: the same view as the card in the chat. It starts from the snapshot the
+// server wrote at publish time and, where the Claude app lets the page reach the plugin, switches to live
+// data. Everything is built from text nodes, so nothing from a source page can ever run as code.
+(function () {
+  const boot = JSON.parse(document.getElementById('snapshot').textContent);
+  const app = document.getElementById('app');
+  const SERVER = boot.server, RATINGS = boot.ratings;
+  // The fixed texts, in the language of the collection, written into the snapshot by the server.
+  const t = boot.strings;
+  document.documentElement.lang = boot.view.lang || 'en';
+  const fill = (text, values) => String(text).replace(/\{([a-z]+)\}/g, (hole, name) => (values && name in values ? String(values[name]) : hole));
+  const DENIED = ['server_not_connected', 'not_in_manifest', 'not_granted', 'capability_disabled', 'capability_removed', 'blocked_by_policy', 'needs_reauth'];
+  let day = boot.view;    // the latest known view of today's work
+  let state = boot.view;  // what is shown: today's work or an opened favorite
+  let tab = 'today', notice = '', failed = false, busy = false, zoomed = false;
+  let mcp = null, db = null, mode = 'copy', live = false;
+  const prefs = {};       // ratings changed on this page that the plugin has not confirmed yet
+
+  function el(tag, props, ...children) {
+    const node = document.createElement(tag);
+    for (const [key, value] of Object.entries(props || {})) {
+      if (key === 'onclick') node.addEventListener('click', value);
+      else if (key === 'class') node.className = value;
+      else if (value !== false && value !== null && value !== undefined) node.setAttribute(key, value === true ? '' : value);
+    }
+    for (const child of children.flat()) if (child !== null && child !== undefined && child !== false) node.append(child);
+    return node;
+  }
+
+  /** Reproductions are files published beside the page; the viewer blocks every other image host. */
+  function picture(id) {
+    if (boot.view.card && id === boot.view.card.id) return boot.image;
+    return (boot.thumbs && boot.thumbs[id]) || '';
+  }
+  const link = url => (typeof url === 'string' && /^https:\/\/(commons|upload)\.wikimedia\.org\//.test(url) ? url : null);
+  const full = view => Boolean(view && typeof view === 'object' && 'today' in view && view.traits && view.favorites && view.rated && view.taste);
+
+  /** Museum date for now: the day begins at 09:00 in Paris, as in the plugin. */
+  function artDate() {
+    try {
+      const parts = {};
+      for (const part of new Intl.DateTimeFormat('en-CA', {timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23'}).formatToParts(new Date())) parts[part.type] = part.value;
+      const date = new Date(parts.year + '-' + parts.month + '-' + parts.day + 'T12:00:00Z');
+      if (Number(parts.hour) < 9) date.setUTCDate(date.getUTCDate() - 1);
+      return date.toISOString().slice(0, 10);
+    } catch (error) { return state.today; }
+  }
+
+  /** Copies a line for the chat; must be called straight from a click. */
+  function copy(text) {
+    if (!(navigator.clipboard && navigator.clipboard.writeText)) return Promise.resolve(false);
+    return navigator.clipboard.writeText(text).then(() => true, () => false);
+  }
+
+  function explain(error) {
+    const code = error && error.code;
+    if (code === 'server_not_connected') return t.errNoPlugin;
+    if (code === 'not_in_manifest' || code === 'not_granted') return t.errNoAccess;
+    if (code === 'approval_required') return t.errApproval;
+    if (code === 'cancelled') return t.errCancelled;
+    if (code === 'tool_error') return fill(t.errRefused, {message: (error && error.message) || '?'});
+    if (code === 'quota_exceeded' || code === 'resource_exhausted') return t.errFull;
+    return fill(t.errSave, {code: code || '?'});
+  }
+
+  /** A view of one work built without the plugin: the snapshot plus what was changed on this page. */
+  function local(id) {
+    const isDay = !day.card || id === day.card.id;
+    const entry = isDay ? {card: day.card, pref: day.pref} : boot.cards && boot.cards[id];
+    if (!entry) return null;
+    return {...day, card: entry.card, pref: prefs[id] || entry.pref};
+  }
+
+  /** Keeps the lists of favorites and ratings in step with a change the plugin has not seen yet. */
+  function remember(id, pref) {
+    prefs[id] = pref;
+    const card = state.card;
+    const favorites = day.favorites.filter(item => item.id !== id);
+    if (pref.favorite) favorites.unshift({id, title: card.title, artist: card.artist, thumbUrl: card.thumbUrl});
+    const rated = day.rated.filter(item => item.id !== id);
+    if (pref.rating !== null && pref.rating !== undefined) rated.unshift({id, title: card.title, artist: card.artist, rating: pref.rating, traits: pref.traits});
+    day = {...day, favorites, rated};
+    if (day.card && day.card.id === id) day.pref = pref;
+    state = {...state, pref, favorites, rated};
+  }
+
+  function saveDirect(id, change) {
+    return mcp.callTool(SERVER, 'art_day_rate', {id, ...change}).then(result => {
+      const view = result && result.payload;
+      if (!full(view)) throw {code: 'tool_error', message: 'empty reply'};
+      delete prefs[id];
+      state = view;
+      if (day.card && view.card && view.card.id === day.card.id) day = view;
+      else day = {...day, favorites: view.favorites, rated: view.rated, taste: view.taste};
+      mcp.invalidate(SERVER, 'art_day_open').catch(() => {});
+    });
+  }
+
+  function saveStored(id, change) {
+    const merged = {...state.pref, ...change};
+    const doc = {id, rating: merged.rating, favorite: merged.favorite, traits: merged.traits, at: new Date().toISOString(), applied: false};
+    return db.collection(RATINGS).doc(id).set(doc).then(() => remember(id, merged));
+  }
+
+  async function save(change, spoken) {
+    if (busy || !state.card) return;
+    const id = state.card.id;
+    failed = false;
+    if (mode === 'copy') {
+      const text = fill(t.saySave, {id, what: spoken});
+      const copied = await copy(text);
+      remember(id, {...state.pref, ...change});
+      notice = copied ? t.copied : fill(t.writeToChat, {text});
+      return render();
+    }
+    busy = true; notice = ''; render();
+    try {
+      if (mode === 'direct') {
+        try { await saveDirect(id, change); notice = t.saved; }
+        catch (error) {
+          if (!(db && DENIED.includes(error && error.code))) throw error;
+          mode = 'stored'; live = false;
+        }
+      }
+      if (mode === 'stored' && notice === '') { await saveStored(id, change); notice = t.storedLater; }
+    } catch (error) { notice = explain(error); failed = true; }
+    busy = false; render();
+  }
+
+  /** Opens today's work or a favorite, as the chat card does with art_day_open. */
+  async function open(id) {
+    tab = 'today'; notice = ''; failed = false;
+    const isDay = !day.card || !id || id === day.card.id;
+    const fallback = isDay ? local(day.card && day.card.id) || day : local(id);
+    if (fallback) { state = fallback; render(); }
+    if (mode === 'direct' && !isDay) {
+      try {
+        const result = await mcp.callTool(SERVER, 'art_day_open', {id});
+        if (full(result && result.payload) && tab === 'today') { state = result.payload; render(); }
+      } catch (error) { /* the snapshot stays on screen */ }
+    } else if (mode === 'stored' && fallback && fallback.card) overlay(fallback.card.id);
+    if (!fallback && state.card && state.card.id !== id) { notice = t.laterWork; render(); }
+  }
+
+  /** A rating saved on this page earlier and not yet carried into the plugin. */
+  function overlay(id) {
+    db.collection(RATINGS).doc(id).get().then(snap => {
+      const data = snap && snap.exists ? snap.data() : null;
+      if (!data || data.applied !== false || !state.card || state.card.id !== id) return;
+      remember(id, {rating: data.rating === undefined ? null : data.rating, favorite: Boolean(data.favorite), traits: Array.isArray(data.traits) ? data.traits : []});
+      render();
+    }, () => {});
+  }
+
+  async function pickNow() {
+    const text = t.sayPick;
+    const copied = await copy(text);
+    notice = copied ? t.copied : fill(t.writeToChat, {text});
+    failed = false; render();
+  }
+
+  function renderToday() {
+    const card = state.card, pref = state.pref;
+    if (!card) return [el('h1', {}, 'Art Day'), el('p', {class: 'story'}, t.noCard)];
+    const image = picture(card.id), original = link(card.imageUrl), source = link(card.sourceUrl);
+    return [
+      el('div', {class: 'art'},
+        image ? el('img', {src: image, alt: card.title + ' — ' + card.artist}) : el('p', {class: 'none'}, t.noPicture),
+        image && el('button', {type: 'button', onclick: () => { zoomed = true; render(); }}, t.zoom)),
+      el('div', {class: 'caption'},
+        el('div', {},
+          el('div', {class: 'eyebrow'}, [card.artist, card.year].filter(Boolean).join(' · ')),
+          el('h1', {}, card.title),
+          el('div', {class: 'byline'}, [card.museum, card.medium].filter(Boolean).join(' · '))),
+        el('button', {type: 'button', class: 'heart', disabled: busy, 'aria-pressed': String(pref.favorite), 'aria-label': pref.favorite ? t.favRemove : t.favAdd,
+          onclick: () => save({favorite: !pref.favorite}, pref.favorite ? t.sayFavOff : t.sayFavOn)}, pref.favorite ? '♥' : '♡')),
+      el('p', {class: 'story'}, card.story),
+      el('div', {class: 'detail'}, el('b', {}, t.detail), card.detail),
+      el('div', {class: 'actions'},
+        original && el('a', {class: 'button', href: original, target: '_blank', rel: 'noopener'}, t.openOriginal),
+        source && el('a', {class: 'button', href: source, target: '_blank', rel: 'noopener'}, t.sourcePage)),
+      el('section', {class: 'rating'},
+        el('h3', {}, t.rateQuestion),
+        el('div', {class: 'stars'}, [1, 2, 3, 4, 5].map(n => el('button', {type: 'button', disabled: busy, 'aria-label': fill(t.rateN, {n}), 'aria-pressed': String(pref.rating === n),
+          onclick: () => save({rating: n}, fill(t.sayRating, {n}))}, n <= (pref.rating || 0) ? '★' : '☆'))),
+        el('p', {class: 'small' + (failed ? ' err' : '')}, (pref.rating ? fill(t.yourRating, {n: pref.rating}) : t.rateHint) + (notice ? ' · ' + notice : '')),
+        el('p', {class: 'small'}, t.traitsQuestion),
+        el('div', {class: 'tags'}, state.traits.map(trait => {
+          const on = pref.traits.includes(trait);
+          const next = on ? pref.traits.filter(item => item !== trait) : [...pref.traits, trait];
+          return el('button', {type: 'button', class: on ? 'on' : '', disabled: busy, 'aria-pressed': String(on),
+            onclick: () => save({traits: next}, fill(t.sayTraits, {list: next.map(key => t['trait_' + key] || key).join(', ') || t.none}))}, t['trait_' + trait] || trait);
+        }))),
+      el('footer', {},
+        el('span', {}, card.date + ' · Wikimedia Commons'),
+        el('span', {}, card.rights)),
+    ];
+  }
+
+  function renderFavorites() {
+    if (!state.favorites.length) return [el('h1', {}, t.favTitle), el('p', {class: 'story'}, t.favEmpty)];
+    return [el('h1', {}, t.favTitle), el('div', {class: 'grid'}, state.favorites.map(item => {
+      const image = picture(item.id);
+      return el('button', {type: 'button', onclick: () => open(item.id)},
+        image ? el('img', {src: image, alt: item.title}) : el('span', {class: 'blank', 'aria-hidden': 'true'}),
+        el('strong', {}, item.title), el('span', {}, item.artist));
+    }))];
+  }
+
+  function renderTaste() {
+    const liked = state.taste.tags.filter(tag => tag.weight > 0).map(tag => tag.name).join(' · ');
+    return [
+      el('div', {class: 'eyebrow'}, t.tasteEyebrow), el('h1', {}, t.tasteTitle),
+      el('p', {class: 'story'}, state.rated.length ? fill(t.tasteRated, {n: state.rated.length})
+        : t.tasteEmpty),
+      el('div', {class: 'detail'}, el('b', {}, t.tasteCloser), liked || t.tasteFew),
+      state.rated.map(item => el('p', {}, item.title + ' — ' + item.rating + '/5' + (item.traits.length ? ' · ' + item.traits.map(key => t['trait_' + key] || key).join(', ') : ''))),
+      el('p', {class: 'small'}, t.tasteNote),
+    ];
+  }
+
+  function render() {
+    const tabs = [['today', t.tabToday], ['saved', t.tabSaved], ['taste', t.tabTaste]];
+    const body = tab === 'saved' ? renderFavorites() : tab === 'taste' ? renderTaste() : renderToday();
+    // Without the plugin the page cannot ask whether a new day began, so it compares the dates itself.
+    const today = live ? day.today : artDate();
+    const isStale = live ? day.stale : day.stale || (day.card && today !== day.card.date);
+    const left = live || today === day.today ? day.attemptsLeft : 1;
+    const stale = isStale && el('div', {class: 'notice', role: 'status'},
+      el('span', {}, !day.enabled ? t.pickOff
+        : left ? fill(t.pickMissing, {date: today}) : t.pickSpent),
+      day.enabled && left > 0 && el('button', {type: 'button', onclick: pickNow}, t.pickNow),
+      tab !== 'today' && notice && el('span', {class: 'small'}, notice));
+    const image = state.card && picture(state.card.id);
+    const zoom = zoomed && image && el('div', {class: 'zoom', onclick: () => { zoomed = false; render(); }},
+      el('img', {src: image, alt: state.card.title}), el('button', {type: 'button'}, t.close));
+    app.replaceChildren(
+      el('header', {}, el('div', {class: 'logo'}, 'Art Day', el('span', {}, '.')),
+        el('nav', {}, tabs.map(([id, name]) => el('button', {type: 'button', class: tab === id ? 'on' : '', 'aria-pressed': String(tab === id),
+          onclick: () => { if (id === 'today') return open(null); tab = id; notice = ''; failed = false; render(); }}, name)))),
+      ...[stale, ...body, zoom].flat().filter(Boolean));
+  }
+
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && zoomed) { zoomed = false; render(); } });
+  if (!(day.card && day.pref)) state = day = {...day, pref: {rating: null, favorite: false, traits: []}};
+  render();
+
+  function settle() {
+    if (mode === 'direct') {
+      mcp.watchTool(SERVER, 'art_day_open', {}, event => {
+        if (event.type === 'error') {
+          if (DENIED.concat('approval_required').includes(event.error && event.error.code)) { live = false; mode = db ? 'stored' : 'copy'; render(); }
+          return;
+        }
+        const view = event.result && event.result.payload;
+        if (!full(view)) return;
+        const shownDay = !state.card || !day.card || state.card.id === day.card.id;
+        day = view; live = true;
+        if (shownDay) state = view; else state = {...state, favorites: view.favorites, rated: view.rated, taste: view.taste};
+        render();
+      });
+    } else if (mode === 'stored' && day.card) overlay(day.card.id);
+    else if (mode === 'copy') { notice = t.copyMode; render(); }
+  }
+
+  if (!(window.claude && window.claude.use)) return settle();
+  Promise.all([window.claude.use('mcp'), window.claude.use('db')]).then(found => {
+    mcp = found[0]; db = found[1];
+    mode = db ? 'stored' : 'copy';
+    if (!mcp || !mcp.listTools) return settle();
+    mcp.listTools(SERVER).then(list => {
+      const found = ((list && list.servers) || []).some(one => one.server === SERVER && one.tools && one.tools.length);
+      if (found) mode = 'direct';
+      settle();
+    }, settle);
+  }, settle);
+})();
+</script>

@@ -1,0 +1,84 @@
+{
+  "manifest_version": "0.3",
+  "name": "art-day",
+  "display_name": "Art Day",
+  "version": "1.2.0",
+  "description": "One museum painting from Wikimedia Commons every day, in the language of your system: story, ratings, favourites and picks by taste.",
+  "author": {
+    "name": "KZBSS888",
+    "url": "https://github.com/KZBSS888"
+  },
+  "license": "MIT",
+  "server": {
+    "type": "node",
+    "entry_point": "server/stdio.mjs",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/stdio.mjs"
+      ],
+      "env": {}
+    }
+  },
+  "tools": [
+    {
+      "name": "art_day_open",
+      "description": "Show the Art Day card"
+    },
+    {
+      "name": "art_day_brief",
+      "description": "Taste summary, issue state and language"
+    },
+    {
+      "name": "art_day_begin",
+      "description": "Register a picking attempt"
+    },
+    {
+      "name": "art_day_search",
+      "description": "Search paintings in Wikimedia Commons"
+    },
+    {
+      "name": "art_day_pick",
+      "description": "Random pick weighted by taste"
+    },
+    {
+      "name": "art_day_look",
+      "description": "Look at a candidate's reproduction"
+    },
+    {
+      "name": "art_day_publish",
+      "description": "Publish today's painting"
+    },
+    {
+      "name": "art_day_rate",
+      "description": "Rating, favourite and traits"
+    },
+    {
+      "name": "art_day_card",
+      "description": "Card files for the pinned artifact"
+    },
+    {
+      "name": "art_day_schedule",
+      "description": "Turn daily picks on or off"
+    },
+    {
+      "name": "art_day_language",
+      "description": "Language of Art Day: the system's, or one you choose"
+    }
+  ],
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "node": ">=20.0.0"
+    }
+  },
+  "homepage": "https://github.com/KZBSS888/claude-plugin-art-day",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KZBSS888/claude-plugin-art-day"
+  }
+}

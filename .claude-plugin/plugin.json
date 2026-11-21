@@ -1,0 +1,33 @@
+{
+  "name": "art-day",
+  "displayName": "Art Day",
+  "version": "1.2.0",
+  "description": "One museum painting from Wikimedia Commons every day, in the language of your system: a short story, a detail to look at, ratings, favourites and picks by your taste.",
+  "author": {
+    "name": "KZBSS888",
+    "url": "https://github.com/KZBSS888"
+  },
+  "homepage": "https://github.com/KZBSS888/claude-plugin-art-day",
+  "repository": "https://github.com/KZBSS888/claude-plugin-art-day",
+  "license": "MIT",
+  "keywords": [
+    "art",
+    "painting",
+    "museum",
+    "wikimedia-commons",
+    "public-domain",
+    "daily"
+  ],
+  "icon": "./.claude-plugin/icon.png",
+  "documentationUrl": "https://github.com/KZBSS888/claude-plugin-art-day#readme",
+  "supportUrl": "https://github.com/KZBSS888/claude-plugin-art-day/issues",
+  "privacyPolicyUrl": "https://github.com/KZBSS888/claude-plugin-art-day/blob/main/PRIVACY.md",
+  "network": {
+    "hosts": [
+      "commons.wikimedia.org",
+      "www.wikidata.org",
+      "upload.wikimedia.org",
+      "thumb.wikimedia.org"
+    ]
+  }
+}
